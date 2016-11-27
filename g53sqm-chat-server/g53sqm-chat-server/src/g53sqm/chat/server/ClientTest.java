@@ -1,0 +1,14 @@
+package g53sqm.chat.server;
+
+import static org.junit.Assert.*;
+
+import org.junit.Test;
+
+public class ClientTest {
+
+	@Test
+	public void test() {
+		ChatClient test = new ChatClient();
+	}
+
+}
