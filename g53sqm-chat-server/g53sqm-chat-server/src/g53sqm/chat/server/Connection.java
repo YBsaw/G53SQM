@@ -8,10 +8,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class Connection implements Runnable {
-	
+
 	final static int STATE_UNREGISTERED = 0;
 	final static int STATE_REGISTERED = 1;
-	
+
 	private volatile boolean running;
 	private int messageCount;
 	private int state;
@@ -20,38 +20,46 @@ public class Connection implements Runnable {
 	private BufferedReader in;
 	private PrintWriter out;
 	private String username;
-	
+
+	String line;
+
 	Connection (Socket client, Server serverReference) {
 		this.serverReference = serverReference;
 		this.client = client;
 		this.state = STATE_UNREGISTERED;
 		messageCount = 0;
+		System.out.println("Connection checkpoint initialized");
 	}
-	
+
 	public void run(){
-		String line;
+//		String line;
+		System.out.println("Connection checkpoint in running");
 		try {
+			System.out.println("Connection checkpoint in try");
 			in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 			out = new PrintWriter(client.getOutputStream(), true);
 		} catch (IOException e) {
 			System.out.println("in or out failed");
 			System.exit(-1);
 		}
+		System.out.println("Connection checkpoint finish try");
 		running = true;
-		this.sendOverConnection("OK Welcome to the chat server, there are currelty " + serverReference.getNumberOfUsers() + " user(s) online");
+		System.out.println("Connection checkpoint after running");
+		this.sendOverConnection("OK Welcome to the chat server, there are currently " + serverReference.getNumberOfUsers() + " user(s) online");
 		while(running) {
+			System.out.println("Connection in run loop");
 			try {
 				line = in.readLine();
-				validateMessage(line);	
+				validateMessage(line);
 			} catch (IOException e) {
 				System.out.println("Read failed");
 				System.exit(-1);
 			}
 		}
 	}
-	
+
 	private void validateMessage(String message) {
-		
+
 		if(message.length() < 4){
 			sendOverConnection ("BAD invalid command to server");
 		} else {
@@ -59,49 +67,49 @@ public class Connection implements Runnable {
 				case "LIST":
 					list();
 					break;
-					
+
 				case "STAT":
 					stat();
 					break;
-					
+
 				case "IDEN":
 					iden(message.substring(5));
 					break;
-					
+
 				case "HAIL":
 					hail(message.substring(5));
 					break;
-				
+
 				case "MESG":
 					mesg(message.substring(5));
 					break;
-				
+
 				case "QUIT":
 					quit();
 					break;
-				
+
 				default:
 					sendOverConnection("BAD command not recognised");
 					break;
 			}
 		}
-			
+
 	}
-	
+
 	private void stat() {
 		String status = "There are currently "+serverReference.getNumberOfUsers()+" user(s) on the server ";
 		switch(state) {
 			case STATE_REGISTERED:
 				status += "You are logged im and have sent " + messageCount + " message(s)";
 				break;
-			
+
 			case STATE_UNREGISTERED:
 				status += "You have not logged in yet";
-				break;		
+				break;
 		}
 		sendOverConnection("OK " + status);
 	}
-	
+
 	private void list() {
 		switch(state) {
 			case STATE_REGISTERED:
@@ -112,20 +120,20 @@ public class Connection implements Runnable {
 				}
 				sendOverConnection("OK " + userListString);
 				break;
-			
+
 			case STATE_UNREGISTERED:
 				sendOverConnection("BAD You have not logged in yet");
 				break;
 		}
-		
+
 	}
-	
+
 	private void iden(String message) {
 		switch(state) {
 			case STATE_REGISTERED:
 				sendOverConnection("BAD you are already registerd with username " + username);
 				break;
-			
+
 			case STATE_UNREGISTERED:
 				String username = message.split(" ")[0];
 				if(serverReference.doesUserExist(username)) {
@@ -133,19 +141,19 @@ public class Connection implements Runnable {
 				} else {
 					this.username = username;
 					state = STATE_REGISTERED;
-					sendOverConnection("OK Welcome to the chat server " + username);			
+					sendOverConnection("OK Welcome to the chat server " + username);
 				}
 				break;
-		}	
+		}
 	}
-	
+
 	private void hail(String message) {
 		switch(state) {
 			case STATE_REGISTERED:
 				serverReference.broadcastMessage("Broadcast from " + username + ": " + message);
 				messageCount++;
 				break;
-			
+
 			case STATE_UNREGISTERED:
 				sendOverConnection("BAD You have not logged in yet");
 				break;
@@ -155,12 +163,12 @@ public class Connection implements Runnable {
 	public boolean isRunning(){
 		return running;
 	}
-	
+
 	private void mesg(String message) {
-		
+
 		switch(state) {
 			case STATE_REGISTERED:
-				
+
 				if(message.contains(" ")) {
 					int messageStart = message.indexOf(" ");
 					String user = message.substring(0, messageStart);
@@ -169,19 +177,19 @@ public class Connection implements Runnable {
 						sendOverConnection("OK your message has been sent");
 					} else {
 						sendOverConnection("BAD the user does not exist");
-					}	
+					}
 				}
 				else{
 					sendOverConnection("BAD Your message is badly formatted");
 				}
 				break;
-			
+
 			case STATE_UNREGISTERED:
 				sendOverConnection("BAD You have not logged in yet");
 				break;
 		}
 	}
-	
+
 	private void quit() {
 		switch(state) {
 			case STATE_REGISTERED:
@@ -200,23 +208,22 @@ public class Connection implements Runnable {
 		}
 		serverReference.removeDeadUsers();
 	}
-	
+
 	private synchronized void sendOverConnection (String message){
 		out.println(message);
 	}
-	
+
 	public void messageForConnection (String message){
 		sendOverConnection(message);
 	}
-	
+
 	public int getState() {
 		return state;
 	}
-	
+
 	public String getUserName() {
 		return username;
 	}
-	
+
 }
 
-	
