@@ -15,11 +15,11 @@ import org.junit.Test;
 
 public class ConnectionTest {
 
-	final static int PORT = 9000;
+	final static int PORT = Runner.PORT;
 	String host = "localhost";
 	Server server;
 
-	Socket user1;
+	Socket socket;
 	BufferedReader in;
 	PrintWriter out;
 
@@ -31,12 +31,14 @@ public class ConnectionTest {
 
 	private int state = STATE_UNREGISTERED;
 
+	/*For each tests, create a new user to connect to the server*/
+
 	@Before
 	public void connect() {
 		try {
-			user1 = new Socket(host,PORT);
-			in = new BufferedReader(new InputStreamReader(user1.getInputStream()));
-			out = new PrintWriter(user1.getOutputStream(), true);
+			socket = new Socket(host,PORT);
+			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			out = new PrintWriter(socket.getOutputStream(), true);
 
 			msgFromServer=in.readLine();
 			System.out.println(msgFromServer);
@@ -53,41 +55,19 @@ public class ConnectionTest {
 	@Test
 	public void testMessageIDEN() throws IOException {
 
-		String username = "Boon";
+		String username = "user";
 
 		/*
 		 * This test is to test when user input IDEN (username)
 		 * whether the server can receive and output correctly
 		 * This is tested by comparing the output with the expected strings.
 		 */
-		//while (true){
 			try {
 
 				/*the following two lines is to test the console input*/
 //				reader = new BufferedReader(new InputStreamReader(System.in));
 //				msgToServer = reader.readLine();
 				msgToServer = "IDEN " + username;
-				out.println(msgToServer);
-				System.out.println(msgToServer);
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		//}
-
-			String user2 = "Boon";
-
-			if(user2 == username) {
-				state = STATE_REGISTERED;
-			}
-
-			try {
-
-				/*the following two lines is to test the console input*/
-//				reader = new BufferedReader(new InputStreamReader(System.in));
-//				msgToServer = reader.readLine();
-				msgToServer = "IDEN " + user2;
-
 				out.println(msgToServer);
 				System.out.println(msgToServer);
 
@@ -105,7 +85,7 @@ public class ConnectionTest {
 				break;
 
 			case STATE_REGISTERED:
-				assertFalse(in.readLine().equals("BAD you are already registerd with username " + username));
+				assertTrue(in.readLine().equals("BAD you are already registerd with username " + username));
 				break;
 			}
 	}
@@ -114,25 +94,24 @@ public class ConnectionTest {
 	public void testMessageSTAT() throws IOException {
 
 		int num = 5;
-		String user = "Boon";
+		String username = "user1";
 		int messageCount = 0;
 		String fString;
 
-		try{
-			msgToServer = "IDEN " + user;
-			out.println(msgToServer);
-			System.out.println(msgToServer);
-
-			state = STATE_REGISTERED;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		/*
+		 * to test both state = STATE_REGISTERED and STATE_UNREGISTERED
+		 * if testing STATE_REGISTERED, use idenUser(user) to register a user;
+		 * if testing STATE_UNREGISTERED, comment out idenUser(user);
+		 */
+		idenUser(username);
 
 		try{
-			System.out.println(state);
 			msgToServer = "STAT";
 			out.println(msgToServer);
 			System.out.println(msgToServer);
+
+			msgFromServer =in.readLine();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -143,28 +122,16 @@ public class ConnectionTest {
 
 		case STATE_UNREGISTERED:
 			status += "You have not logged in yet";
-
-			fString = "OK " + status;
-
-			/*
-			 * pass the test if it returns the expected result(string).
-			 * The expected string is hardcoded.
-			 */
-			assertTrue(in.readLine().equals(fString));
 			break;
 
 		case STATE_REGISTERED:
 			status += "You are logged im and have sent " + messageCount + " message(s)";
-
-			fString = "OK " + status;
-
-			/*
-			 * pass the test if it returns the expected result(string).
-			 * The expected string is hardcoded.
-			 */
-			assertFalse(in.readLine().equals(fString));
 			break;
 		}
+
+		fString = "OK " + status;
+
+		assertTrue(msgFromServer.equals(fString));
 
 
 	}
@@ -172,10 +139,22 @@ public class ConnectionTest {
 	@Test
 	public void testMessageLIST() throws IOException {
 
+		String username = "user2";
+
+		/*
+		 * to test both state = STATE_REGISTERED and STATE_UNREGISTERED
+		 * if testing STATE_REGISTERED, use idenUser(user) to register a user;
+		 * if testing STATE_UNREGISTERED, comment out idenUser(user);
+		 */
+		idenUser(username);
+
 		try{
 			msgToServer = "LIST";
 			out.println(msgToServer);
 			System.out.println(msgToServer);
+
+			msgFromServer = in.readLine();
+			System.out.println(msgFromServer);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -184,53 +163,143 @@ public class ConnectionTest {
 		 * pass the test if it returns result as expected string.
 		 * The expected string is hardcoded.
 		 */
-		assertTrue(in.readLine().equals("BAD You have not logged in yet"));
+
+		switch(state) {
+		case STATE_REGISTERED:
+			assertTrue(msgFromServer.equals("OK user3, user, user2, "));
+			break;
+
+		case STATE_UNREGISTERED:
+			assertTrue(msgFromServer.equals("BAD You have not logged in yet"));
+			break;
+		}
 	}
 
 	@Test
 	public void testMessageHAIL() throws IOException {
 
 		String broadcastMessage = "Hi";
+		String user = "user3";
+
+		/*
+		 * to test both state = STATE_REGISTERED and STATE_UNREGISTERED
+		 * if testing STATE_REGISTERED, use idenUser(user) to register a user;
+		 * if testing STATE_UNREGISTERED, comment out idenUser(user);
+		 */
+		idenUser(user);
+
 
 		try {
 			msgToServer = "HAIL " + broadcastMessage;
 			out.println(msgToServer);
 			System.out.println(msgToServer);
+			msgFromServer = in.readLine();
+			System.out.println(msgFromServer);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		assertTrue(in.readLine().equals("BAD You have not logged in yet"));
+		switch(state) {
+		case STATE_REGISTERED:
+			assertTrue(msgFromServer.equals("Broadcast from " + user + ": " + broadcastMessage));
+			break;
+
+		case STATE_UNREGISTERED:
+			assertTrue(msgFromServer.equals("BAD You have not logged in yet"));
+			break;
+		}
 	}
 
 	@Test
 	public void testMessageMESG() throws IOException {
 
+		String username1 = "user4";
+		String username2 = "user2";
+		String message = "Hi";
+
+		/*
+		 * to test both state = STATE_REGISTERED and STATE_UNREGISTERED
+		 * if testing STATE_REGISTERED, use idenUser(user) to register a user;
+		 * if testing STATE_UNREGISTERED, comment out idenUser(user);
+		 */
+		idenUser(username1);
+
 		try {
-			msgToServer = "MESG ";
+			msgToServer = "MESG " + username2 + " " + message;
 			out.println(msgToServer);
 			System.out.println(msgToServer);
+
+			msgFromServer = in.readLine();
+			System.out.println(msgFromServer);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		assertTrue(in.readLine().equals("BAD You have not logged in yet"));
+		switch(state) {
+		case STATE_REGISTERED:
+			assertTrue(msgFromServer.equals("OK your message has been sent"));
+			break;
+
+		case STATE_UNREGISTERED:
+			assertTrue(msgFromServer.equals("BAD You have not logged in yet"));
+
+		}
 	}
 
 	@Test
 	public void testMessageQUIT() throws IOException {
 
+		String username = "user5";
+		int messageCount = 0;
+
+		/*
+		 * to test both state = STATE_REGISTERED and STATE_UNREGISTERED
+		 * if testing STATE_REGISTERED, use idenUser(user) to register a user;
+		 * if testing STATE_UNREGISTERED, comment out idenUser(user);
+		 */
+		idenUser(username);
+
 		try {
 			msgToServer = "QUIT";
 			out.println(msgToServer);
 			System.out.println(msgToServer);
+
+			msgFromServer = in.readLine();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		assertTrue(in.readLine().equals("OK goodbye"));
+		switch(state) {
+		case STATE_REGISTERED:
+			if(username != "user4" || username != "user3" || username != "user2" || username != "user")
+				assertTrue(msgFromServer.equals("OK thank you for sending " + messageCount + " message(s) with the chat service, goodbye. "));
+			break;
+
+		case STATE_UNREGISTERED:
+			assertTrue(msgFromServer.equals("OK goodbye"));
+			break;
+		}
+
+	}
+
+	public void idenUser(String user){
+
+		try{
+			msgToServer = "IDEN " + user;
+			out.println(msgToServer);
+			msgFromServer =in.readLine();
+
+			setState(STATE_REGISTERED);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void setState(int connectionState) {
+		state = connectionState;
 	}
 
 }
