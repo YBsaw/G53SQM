@@ -50,7 +50,12 @@ public class Connection implements Runnable {
 			System.out.println("Connection in run loop");
 			try {
 				line = in.readLine();
-				validateMessage(line);
+
+				if(line != null) {
+					validateMessage(line);
+				} else {
+					in.close();
+				}
 			} catch (IOException e) {
 				System.out.println("Read failed");
 				System.exit(-1);

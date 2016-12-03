@@ -16,10 +16,8 @@ import org.junit.Test;
 public class ServerTest {
 
 	final static int PORT = Runner.PORT;
-	final static int SERVERPORT = 9001;
-
 	String host = "localhost";
-	static ServerSocket testSocket;
+	ServerSocket testSocket;
 	Socket socket;
 
 	public void userConnection(int port) {
@@ -50,9 +48,11 @@ public class ServerTest {
 			assertNotNull(socket);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
+			System.err.println("No such server.");
 			assertNull(socket);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
+			System.err.println("No such server.");
 			assertNull(socket);
 		}
 
