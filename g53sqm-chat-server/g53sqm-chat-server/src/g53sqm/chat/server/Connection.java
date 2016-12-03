@@ -36,8 +36,8 @@ public class Connection implements Runnable {
 		System.out.println("Connection checkpoint in running");
 		try {
 			System.out.println("Connection checkpoint in try");
-			in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-			out = new PrintWriter(client.getOutputStream(), true);
+			in = new BufferedReader(new InputStreamReader(client.getInputStream())); //create a new buffer reader to read from the server
+			out = new PrintWriter(client.getOutputStream(), true); //create a new print writer to write input to the server
 		} catch (IOException e) {
 			System.out.println("in or out failed");
 			System.exit(-1);
@@ -45,14 +45,18 @@ public class Connection implements Runnable {
 		System.out.println("Connection checkpoint finish try");
 		running = true;
 		System.out.println("Connection checkpoint after running");
+
+		//welcome message to show users that they have connected to the server successfully.
 		this.sendOverConnection("OK Welcome to the chat server, there are currently " + serverReference.getNumberOfUsers() + " user(s) online");
+
+		//when the connection is running.
 		while(running) {
 			System.out.println("Connection in run loop");
 			try {
-				line = in.readLine();
+				line = in.readLine(); //read the latest line in the server.
 
-				if(line != null) {
-					validateMessage(line);
+				if(line != null) { //check if there is any line to be read.
+					validateMessage(line); //validate the message that have been typed by the user
 				} else {
 					in.close();
 				}
@@ -66,9 +70,9 @@ public class Connection implements Runnable {
 	private void validateMessage(String message) {
 
 		if(message.length() < 4){
-			sendOverConnection ("BAD invalid command to server");
+			sendOverConnection ("BAD invalid command to server"); //if less than 4 characters, invalid commands.
 		} else {
-			switch(message.substring(0,4)){
+			switch(message.substring(0,4)){ //check the first 4 characters of the input.
 				case "LIST":
 					list();
 					break;
@@ -101,6 +105,7 @@ public class Connection implements Runnable {
 
 	}
 
+	//to check the current state of the specific user.
 	private void stat() {
 		String status = "There are currently "+serverReference.getNumberOfUsers()+" user(s) on the server ";
 		switch(state) {
@@ -115,6 +120,7 @@ public class Connection implements Runnable {
 		sendOverConnection("OK " + status);
 	}
 
+	//to show the list of users that are connected to the server.
 	private void list() {
 		switch(state) {
 			case STATE_REGISTERED:
@@ -133,6 +139,7 @@ public class Connection implements Runnable {
 
 	}
 
+	//to login to the server with the username.
 	private void iden(String message) {
 		switch(state) {
 			case STATE_REGISTERED:
@@ -152,6 +159,7 @@ public class Connection implements Runnable {
 		}
 	}
 
+	//to send a message that all users can see.
 	private void hail(String message) {
 		switch(state) {
 			case STATE_REGISTERED:
@@ -165,10 +173,12 @@ public class Connection implements Runnable {
 		}
 	}
 
+	//check if the connection is still running.
 	public boolean isRunning(){
 		return running;
 	}
 
+	//send a private message to specific user.
 	private void mesg(String message) {
 
 		switch(state) {
@@ -195,6 +205,7 @@ public class Connection implements Runnable {
 		}
 	}
 
+	//disconnect from the server
 	private void quit() {
 		switch(state) {
 			case STATE_REGISTERED:
@@ -214,18 +225,22 @@ public class Connection implements Runnable {
 		serverReference.removeDeadUsers();
 	}
 
+	//send the input to the server.
 	private synchronized void sendOverConnection (String message){
 		out.println(message);
 	}
 
+	//send the message over the connection to the server.
 	public void messageForConnection (String message){
 		sendOverConnection(message);
 	}
 
+	//get the current state of the user, whether registered or not registered.
 	public int getState() {
 		return state;
 	}
 
+	//get the username of specific user.
 	public String getUserName() {
 		return username;
 	}

@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -63,10 +62,6 @@ public class ConnectionTest {
 		 * This is tested by comparing the output with the expected strings.
 		 */
 			try {
-
-				/*the following two lines is to test the console input*/
-//				reader = new BufferedReader(new InputStreamReader(System.in));
-//				msgToServer = reader.readLine();
 				msgToServer = "IDEN " + username;
 				out.println(msgToServer);
 				System.out.println(msgToServer);
@@ -284,6 +279,8 @@ public class ConnectionTest {
 
 	}
 
+	/*to log in as a user with a name*/
+
 	public void idenUser(String user){
 
 		try{
@@ -291,15 +288,11 @@ public class ConnectionTest {
 			out.println(msgToServer);
 			msgFromServer =in.readLine();
 
-			setState(STATE_REGISTERED);
+			state = STATE_REGISTERED;
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	public void setState(int connectionState) {
-		state = connectionState;
 	}
 
 }

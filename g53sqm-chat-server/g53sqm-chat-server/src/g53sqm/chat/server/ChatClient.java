@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 
 import java.util.*;
 
+@SuppressWarnings("serial")
 public class ChatClient extends Applet implements KeyListener
 {
 	private int serverPort = 9000;

@@ -2,15 +2,11 @@ package g53sqm.chat.server;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ServerTest {
@@ -49,11 +45,9 @@ public class ServerTest {
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			System.err.println("No such server.");
-			assertNull(socket);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.err.println("No such server.");
-			assertNull(socket);
 		}
 
 	}
@@ -70,7 +64,11 @@ public class ServerTest {
 			testSocket = new ServerSocket(PORT);
 
 			userConnection(PORT);
-			assertNotNull(testSocket);
+
+			//if somehow the testSocket is able to be created with the port number, fail the test by expecting it to be null
+			//because that means the port that is supposed to be used by runner's server is available.
+			//that is not the expected result.
+			assertNull(testSocket);
 
 		} catch (Exception e) {
 			System.err.println("Same port number has been used.");

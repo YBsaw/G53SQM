@@ -13,17 +13,19 @@ public class Server {
 
 	public Server (int port) {
 		try {
-			server = new ServerSocket(port);
+			server = new ServerSocket(port); //initialised a new server with a server socket using the specific port number.
 			System.out.println("Server has been initialised on port " + port);
 		}
 		catch (IOException e) {
 			System.err.println("error initialising server");
 			e.printStackTrace();
 		}
-		list = new ArrayList<Connection>();
-		while(true) {
+		list = new ArrayList<Connection>(); //create a list to record the connections.
+		while(true) { //loop when the server is on
 				Connection c = null;
 				try {
+					//the server will wait for a connection and accept it.
+					//if there is no connection, the method is blocked and the program will wait until there's one.
 					c = new Connection(server.accept(), this);
 				}
 				catch (IOException e) {
@@ -38,6 +40,7 @@ public class Server {
 		}
 	}
 
+	//to get the user list from the server
 	public ArrayList<String> getUserList() {
 		ArrayList<String> userList = new ArrayList<String>();
 		for( Connection clientThread: list){
@@ -48,6 +51,7 @@ public class Server {
 		return userList;
 	}
 
+	//to check if specific user has connected to the server or not.
 	public boolean doesUserExist(String newUser) {
 		boolean result = false;
 		for( Connection clientThread: list){
@@ -58,6 +62,7 @@ public class Server {
 		return result;
 	}
 
+	//send the message that all users can see
 	public void broadcastMessage(String theMessage){
 		System.out.println(theMessage);
 		for( Connection clientThread: list){
@@ -65,6 +70,7 @@ public class Server {
 		}
 	}
 
+	//send private message to the specific recipient
 	public boolean sendPrivateMessage(String message, String user) {
 		for( Connection clientThread: list) {
 			if(clientThread.getState() == Connection.STATE_REGISTERED) {
@@ -77,6 +83,7 @@ public class Server {
 		return false;
 	}
 
+	//remove any users that have disconnected.
 	public void removeDeadUsers(){
 		Iterator<Connection> it = list.iterator();
 		while (it.hasNext()) {
@@ -86,10 +93,12 @@ public class Server {
 		}
 	}
 
+	//get the number of users that have connected to the server.
 	public int getNumberOfUsers() {
 		return list.size();
 	}
 
+	//close the server
 	protected void finalize() throws IOException{
 		server.close();
 	}
