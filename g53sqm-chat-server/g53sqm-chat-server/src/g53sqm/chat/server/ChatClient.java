@@ -49,7 +49,6 @@ public class ChatClient extends Applet implements KeyListener
 
 	public void init()
 	{
-		input.setEditable(false);
 
 		Panel keys = new Panel();
 		keys.setLayout(new GridLayout(1,2));
@@ -66,9 +65,10 @@ public class ChatClient extends Applet implements KeyListener
 		users.setLayout(new BorderLayout());
 		users.add("Center", name);
 
-		Label title = new Label("Simple Chat Client Applet", Label.CENTER);
+		Label title = new Label("Simple Chat Client Interface", Label.CENTER);
 		title.setFont(new Font("Helvetica", Font.BOLD, 14));
 
+		name.setEditable(false);
 		name.setText("User List\n");
 
 		setLayout(new BorderLayout());
@@ -81,6 +81,7 @@ public class ChatClient extends Applet implements KeyListener
 		quit.setEnabled(false);
 		send.setEnabled(false);
 
+
 		getHost();
 		getPort();
 
@@ -92,21 +93,47 @@ public class ChatClient extends Applet implements KeyListener
 
 		if(e.target == quit) {
 			if(isConnected = true) {
-			input.setText(".bye");
-			send();
-			quit.setEnabled(false);
-			send.setEnabled(false);
-			connect.setEnabled(true);
-			userRemove(username);
-			name.setText("User List\n" +userList.toString());
-			isConnected = false;
+				msgToServer = "QUIT";
+				toConsole(msgToServer);
+				fromConsole();
+
+				msgToServer = "LIST";
+				toConsole(msgToServer);
+				try{
+					msgFromServer = in.readLine();
+					userListUpdate(msgFromServer);
+					System.out.println(msgFromServer);
+
+				} catch (IOException a)
+				{
+					println("Receiving message error ");
+					close();
+				}
+
+				quit.setEnabled(false);
+				send.setEnabled(false);
+				connect.setEnabled(true);
+
+				isConnected = false;
 
 			}
 
 		}
 
 		else if(e.target == connect) {
-			connect(serverName, serverPort);
+
+			if(!(input.getText().equals(""))){
+				connect(serverName, serverPort);
+
+
+			}
+			else {
+				println("Invalid username");
+				input.setText("");
+			}
+
+
+
 		}
 
 		else if (e.target == send) {
@@ -120,7 +147,6 @@ public class ChatClient extends Applet implements KeyListener
 
 	}
 
-	@SuppressWarnings("deprecation")
 	public void connect(String serverName, int serverPort) {
 		println("Establishing connection. Please wait...");
 
@@ -139,16 +165,35 @@ public class ChatClient extends Applet implements KeyListener
 
 				println(msgFromServer);
 
-				send.enable();
-				connect.disable();
-				quit.enable();
+				username = input.getText();
+
+				msgToServer = "IDEN " + username;
+				toConsole(msgToServer);
+				fromConsole();
+
+				println("");
+				msgToServer = "LIST";
+				toConsole(msgToServer);
+				try{
+					msgFromServer = in.readLine();
+					userListUpdate(msgFromServer);
+					System.out.println(msgFromServer);
+
+				} catch (IOException a)
+				{
+					println("Receiving message error ");
+					close();
+				}
+
+				println("");
+				println("Commands are as below: ");
+				println("./LIST - show the list of users in the server.");
+				println("./STAT - show the state of user(yourself).");
+				println("./MESG username pm - send private message to the user with 'username'");
+
+				input.setText("");
+
 				isConnected = true;
-
-				//System.out.println(client.isRunning());
-
-				userAdd(username);
-				name.setText("User List\n" +userList.toString());
-				name.setEditable(false);
 
 			}
 			catch (UnknownHostException e)
@@ -170,12 +215,15 @@ public class ChatClient extends Applet implements KeyListener
 		if(isConnected == true){
 			input.setEditable(true);
 			display.setEditable(false);
+			send.setEnabled(true);
+			connect.setEnabled(false);
+			quit.setEnabled(true);
 		}
 	}
 
 	private void send() {
 
-			println(username + ": " + input.getText());
+			//println(username + ": " + input.getText());
 
 			msgToServer = input.getText();
 
@@ -185,6 +233,7 @@ public class ChatClient extends Applet implements KeyListener
 				case "./LIST":
 					msgToServer = "LIST";
 					toConsole(msgToServer);
+					fromConsole();
 
 					input.setText("");
 					break;
@@ -192,28 +241,39 @@ public class ChatClient extends Applet implements KeyListener
 				case "./STAT":
 					msgToServer = "STAT";
 					toConsole(msgToServer);
+					fromConsole();
 
 					input.setText("");
 					break;
 
 				case "./IDEN":
-					username = msgToServer.substring(7);
 					msgToServer = "IDEN " + username;
 					toConsole(msgToServer);
+					fromConsole();
+
 
 					input.setText("");
 					break;
 
 				case "./HAIL":
-					msgToServer = "HAIL";
+					msgToServer = "HAIL ";
 					toConsole(msgToServer);
+					fromConsole();
+					fromConsole();
 
 					input.setText("");
 					break;
 
 				case "./MESG":
-					msgToServer = "MESG";
+					msgToServer = "MESG " + msgToServer.substring(7);
+
+					if(msgToServer.substring(7).contains(" ")){
+						int messageStart = msgToServer.substring(7).indexOf(" ");
+						String pm = msgToServer.substring(messageStart+1);
+						msgToServer = msgToServer + pm;
+					}
 					toConsole(msgToServer);
+					fromConsole();
 
 					input.setText("");
 					break;
@@ -221,55 +281,51 @@ public class ChatClient extends Applet implements KeyListener
 				case "./QUIT":
 					msgToServer = "QUIT";
 					toConsole(msgToServer);
+					fromConsole();
 
 					input.setText("");
 					break;
 
 				default:
+					System.out.println(username + ": " + input.getText());
 					input.setText("");
 					break;
 				}
 			}
-			else{}
+			else{
+				if(isConnected == true){
+				msgToServer = "HAIL " + input.getText();
+				toConsole(msgToServer);
+				fromConsole();
 
+				fromConsole();
 
-/*			if(msgToServer.equals("./LIST") || msgToServer.equals("./STAT") || msgToServer.equals("./IDEN") || msgToServer.equals("HAIL")
-					|| msgToServer.equals("./MESG") || msgToServer.equals("./QUIT") )
-				{
-				out.println(msgToServer);
-
-				msgFromServer = in.readLine();
-				println(msgFromServer);
-				System.out.println(msgFromServer);
+				input.setText("");
 				}
-
-			input.setText("");*/
+			}
 
 
 	}
 
 	private void toConsole(String message) {
-		try {
+
 		out.println(message);
 
-		message = in.readLine();
-		println(message);
-		System.out.println(message);
-		} catch (IOException e)
-		{
-			println("Sending error: " + e.getMessage());
-			close();
-		}
 	}
 
-	public void handle(String msg)
-	{
-		if (msg.equals(".bye"))
+	private void fromConsole() {
+		String message;
+
+		try{
+			message = in.readLine();
+			println(message);
+			System.out.println(message);
+
+		} catch (IOException e)
 		{
-			println("Goodbye. Press RETURN to exit...");
+			println("Receiving message error ");
 			close();
 		}
-		else println(msg);
 	}
 
 	public void open()
@@ -312,6 +368,13 @@ public class ChatClient extends Applet implements KeyListener
 		userList.remove(data);
 	}
 
+	private void userListUpdate(String msg)
+	{
+		msg = msg.substring(3);
+		msg.split(",");
+		name.append(msg+ "\n");
+	}
+
 	private void println(String msg)
 	{
 		display.append(msg+ "\n");
@@ -332,17 +395,25 @@ public class ChatClient extends Applet implements KeyListener
 	public void keyPressed(KeyEvent e) {
 		// TODO Auto-generated method stub
 
-		System.out.println(e.getKeyChar());
-
-
 		switch(e.getKeyCode()) {
 
 		case KeyEvent.VK_ENTER:
-			if(!input.getText().isEmpty()){
-				System.out.println("Enter pressed");
+			if(!input.getText().isEmpty() && isConnected == true){
 				send();
 				input.requestFocus();
 			}
+
+			else if (!input.getText().isEmpty() && isConnected == false) {
+				connect(serverName,serverPort);
+				input.requestFocus();
+			}
+
+			else if(input.getText().isEmpty() && isConnected == false) {
+				println("Invalid username.");
+				input.requestFocus();
+			}
+
+			input.setText("");
 			break;
 
 
